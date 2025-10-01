@@ -11,7 +11,6 @@ export default async function PrivatePage() {
     redirect("/login");
   }
   const usuario = await getUsuario();
-  console.log(usuario);
 
   return (
     <>

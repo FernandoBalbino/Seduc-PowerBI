@@ -8,6 +8,12 @@ type User = {
   setores: string[];
 };
 
+type Dashboard = {
+  id: string;
+  name: string;
+  url: string;
+  sector: string;
+};
 export async function getUsuario(): Promise<User> {
   const supabase = await createClient();
   const { data } = await supabase.auth.getUser();
@@ -43,5 +49,27 @@ export async function getUsuario(): Promise<User> {
     }),
   };
 }
+export async function getDashboardsBySetor(
+  setor: string
+): Promise<Dashboard[]> {
+  const dashboards = await prisma.dashboard.findMany({
+    where: {
+      sector: {
+        equals: setor, // Filtra dashboards que contêm o setor especificado
+        mode: "insensitive", // Ignora maiúsculas/minúsculas na comparação
+      },
+    },
+    select: {
+      id: true,
+      name: true,
+      url: true,
+      sector: true,
+    },
+    orderBy: {
+      createdAt: "desc",
+    },
+  });
 
+  return dashboards;
+}
 export type { User };
