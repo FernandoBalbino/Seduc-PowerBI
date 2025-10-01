@@ -5,12 +5,13 @@ import Image from "next/image";
 import { GoEyeClosed } from "react-icons/go";
 import { GoEye } from "react-icons/go";
 import { useState } from "react";
-
+import SubmitButton from "./submitButton";
 export default function Home() {
   const [passwordVisible, setPasswordVisible] = useState(false);
   const searchParams = useSearchParams();
+
   const erroLogin = searchParams.get("message");
-  console.log(erroLogin);
+
   const togglePasswordVisibility = () => {
     setPasswordVisible(!passwordVisible);
   };
@@ -44,7 +45,7 @@ export default function Home() {
                 </div>
               )}
               {/* Formulário de Login */}
-              <form className="space-y-6">
+              <form action={login} className="space-y-6">
                 <div>
                   <label
                     htmlFor="email"
@@ -79,7 +80,7 @@ export default function Home() {
                   ></input>
                   <div
                     onClick={togglePasswordVisibility}
-                    className="absolute bg-white top-11 right-5 cursor-pointer"
+                    className="absolute  top-11 right-5 cursor-pointer"
                   >
                     {passwordVisible ? (
                       <GoEye size={20} />
@@ -87,14 +88,8 @@ export default function Home() {
                       <GoEyeClosed size={20} />
                     )}
                   </div>
+                  <SubmitButton />
                 </div>
-
-                <button
-                  formAction={login}
-                  className="w-full cursor-pointer bg-blue-600 text-white py-3 px-4 rounded-lg font-medium hover:bg-blue-700 focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition-colors"
-                >
-                  Entrar
-                </button>
               </form>
             </div>
           </div>

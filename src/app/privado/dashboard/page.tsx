@@ -1,7 +1,8 @@
 import { redirect } from "next/navigation";
 import { logout } from "@/app/login/action";
-import { createClient } from "@/utils/supabase/serve";
 
+import { createClient } from "@/utils/supabase/serve";
+import { getUsuario } from "./action";
 export default async function PrivatePage() {
   const supabase = await createClient();
 
@@ -9,10 +10,12 @@ export default async function PrivatePage() {
   if (error || !data?.user) {
     redirect("/login");
   }
+  const usuario = await getUsuario();
+  console.log(usuario);
 
   return (
     <>
-      <p>Hello {data.user.email}</p>;
+      <p>Hello, VOCE TEM SETORES: {usuario.setores}</p>;
       <form action={logout}>
         <button className="cursor-pointer bg-red-200">sair</button>
       </form>
