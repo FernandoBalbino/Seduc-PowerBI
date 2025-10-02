@@ -39,10 +39,10 @@ export async function getUsuario(): Promise<User> {
     id: rawUser.id,
     email: rawUser.email,
     nome: rawUser.nome,
-    setores: rawUser.sectors.flatMap((s) => {
+    setores: rawUser.sectors.flatMap((s: { sector: string }) => {
       try {
-        const parsed = JSON.parse(s.sector);
-        return Array.isArray(parsed) ? parsed : [s.sector];
+        const parsed = JSON.parse(s.sector) as unknown;
+        return Array.isArray(parsed) ? (parsed as string[]) : [s.sector];
       } catch {
         return [s.sector];
       }

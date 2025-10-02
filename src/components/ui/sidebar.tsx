@@ -3,8 +3,7 @@
 import * as React from "react";
 import { Slot } from "@radix-ui/react-slot";
 import { cva, VariantProps } from "class-variance-authority";
-import { PanelLeftIcon } from "lucide-react";
-import { Menu } from "lucide-react";
+// Removed unused icons to satisfy linter
 import { FaAnglesLeft, FaAnglesRight } from "react-icons/fa6";
 
 import { useIsMobile } from "@/hooks/use-mobile";
