@@ -1,5 +1,6 @@
 "use client";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
+import { useEffect } from "react";
 import {
   HoverCard,
   HoverCardContent,
@@ -41,13 +42,19 @@ interface AppSidebarProps {
 }
 
 export function AppSidebar({ setores, userName }: AppSidebarProps) {
+  const router = useRouter();
   const pathname = usePathname();
-  console.log(setores);
   const setoresFormatados = setores.map((setor) => ({
     nome: setor,
     slug: setorToSlug(setor),
     url: `/privado/dashboard/${setorToSlug(setor)}`,
   }));
+
+  useEffect(() => {
+    setoresFormatados.forEach((setor) => {
+      router.prefetch(setor.url);
+    });
+  }, [setoresFormatados, router]);
 
   const setorAtivo = setoresFormatados.find((setor) =>
     pathname.startsWith(setor.url)
