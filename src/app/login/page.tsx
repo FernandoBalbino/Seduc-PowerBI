@@ -1,11 +1,13 @@
 "use client";
 import { useSearchParams } from "next/navigation";
+import { Suspense } from "react";
 import { login } from "./action";
 import Image from "next/image";
 import { GoEyeClosed } from "react-icons/go";
 import { GoEye } from "react-icons/go";
 import { useState } from "react";
 import SubmitButton from "./submitButton";
+import Skeleton from "./loading";
 export default function Home() {
   const [passwordVisible, setPasswordVisible] = useState(false);
   const searchParams = useSearchParams();
@@ -16,7 +18,7 @@ export default function Home() {
     setPasswordVisible(!passwordVisible);
   };
   return (
-    <>
+    <Suspense fallback={<Skeleton />}>
       <div className="relative w-screen h-screen text-white">
         <div>
           <Image
@@ -24,6 +26,7 @@ export default function Home() {
             alt="Logo SEDUC"
             width={200}
             height={100}
+            priority
             className="absolute bottom-10 left-10 z-10"
           />
         </div>
@@ -95,6 +98,6 @@ export default function Home() {
           </div>
         </div>
       </div>
-    </>
+    </Suspense>
   );
 }
