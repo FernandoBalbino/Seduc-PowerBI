@@ -6,7 +6,7 @@ export default async function SetorPage({
 }) {
   const { slug } = await params;
   const dashboards = await getDashboardsBySetor(slug);
-
+  console.log(dashboards);
   return (
     <div>
       <h1>Setor: {slug}</h1>

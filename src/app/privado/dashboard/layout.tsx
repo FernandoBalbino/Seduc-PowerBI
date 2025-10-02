@@ -15,11 +15,7 @@ export default async function Layout({
 
   return (
     <SidebarProvider>
-      <AppSidebar
-        setores={user.setores}
-        userName={user.email}
-        dashboards={dashboards}
-      />
+      <AppSidebar setores={user.setores} userName={user.email} />
       <main className="bg-[#F9FAFB] w-full">
         <SidebarTrigger className="text-6xl" />
         {children}
