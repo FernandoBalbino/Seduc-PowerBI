@@ -268,7 +268,7 @@ function SidebarTrigger({
       variant="ghost"
       size={"icon"}
       className={cn(
-        "size-10  border-2 border[#2B7FFF] m-2 cursor-pointer ",
+        "size-10 z-50 border-2 border[#2B7FFF] m-2 cursor-pointer ",
         className
       )}
       onClick={(event) => {

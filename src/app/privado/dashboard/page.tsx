@@ -1,8 +1,14 @@
 import { redirect } from "next/navigation";
-import { logout } from "@/app/login/action";
-
+import {
+  Breadcrumb,
+  BreadcrumbItem,
+  BreadcrumbLink,
+  BreadcrumbList,
+  BreadcrumbPage,
+  BreadcrumbSeparator,
+} from "@/components/ui/breadcrumb";
 import { createClient } from "@/utils/supabase/serve";
-import { getUsuario } from "./action";
+
 export default async function PrivatePage() {
   const supabase = await createClient();
 
@@ -10,14 +16,12 @@ export default async function PrivatePage() {
   if (error || !data?.user) {
     redirect("/login");
   }
-  const usuario = await getUsuario();
 
   return (
     <>
-      <p>Hello, VOCE TEM SETORES: {usuario.setores}</p>;
-      <form action={logout}>
-        <button className="cursor-pointer bg-red-200">sair</button>
-      </form>
+      <div className="flex rounded-3xl border-8 border-dashed mx-auto items-center justify-center w-[90%] h-[calc(95vh-58px)] ">
+        <span className="text-white text-xl font-bold">d</span>
+      </div>
     </>
   );
 }

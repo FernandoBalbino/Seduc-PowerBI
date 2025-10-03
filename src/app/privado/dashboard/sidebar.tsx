@@ -184,7 +184,7 @@ export function AppSidebar({ setores, userName }: AppSidebarProps) {
   );
 
   return (
-    <Sidebar className="h-full " variant="sidebar">
+    <Sidebar className="h-full z-50" variant="sidebar">
       <SidebarContent className=" ">
         <SidebarGroup className="">
           <div className="flex pointer-events-none items-center gap-2 py-3 px-3 border-b border-b-gray-200 mb-3">
