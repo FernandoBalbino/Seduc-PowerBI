@@ -65,7 +65,6 @@ export function AppSidebar({ setores, userName }: AppSidebarProps) {
     url: `/privado/dashboard/${setorToSlug(setor)}`,
   }));
 
-  // Prefetch apenas das rotas de setores (não dos dashboards individuais)
   useEffect(() => {
     setoresFormatados.forEach((setor) => {
       router.prefetch(setor.url);
@@ -106,16 +105,6 @@ export function AppSidebar({ setores, userName }: AppSidebarProps) {
 
     fetchDashboards();
   }, [setorAtual]);
-
-  // Prefetch dos dashboards após serem carregados
-  useEffect(() => {
-    if (dashboards.length > 0 && setorSlug) {
-      dashboards.forEach((dashboard) => {
-        const dashboardUrl = `/privado/dashboard/${setorSlug}/${dashboard.id}`;
-        router.prefetch(dashboardUrl);
-      });
-    }
-  }, [dashboards, setorSlug, router]);
 
   return (
     <Sidebar className="h-full " variant="sidebar">
