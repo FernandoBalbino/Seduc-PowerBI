@@ -1,6 +1,7 @@
 "use server";
 import { createClient } from "@/utils/supabase/serve";
 import { prisma } from "@/lib/prisma";
+import { unstable_cache } from "next/cache";
 
 type User = {
   id: string;
@@ -15,9 +16,14 @@ type Dashboard = {
   url: string;
   sector: string;
 };
+
+/**
+ * Função dinâmica (não pode ser cacheada porque usa cookies do Supabase)
+ */
 export async function getUsuario(): Promise<User> {
   const supabase = await createClient();
   const { data } = await supabase.auth.getUser();
+
   if (!data.user?.id) {
     throw new Error("Sessão inválida");
   }
@@ -50,27 +56,30 @@ export async function getUsuario(): Promise<User> {
     }),
   };
 }
-export async function getDashboardsBySetor(
-  setor: string
-): Promise<Dashboard[]> {
-  const dashboards = await prisma.dashboard.findMany({
-    where: {
-      sector: {
-        equals: setor, // Filtra dashboards que contêm o setor especificado
-        mode: "insensitive", // Ignora maiúsculas/minúsculas na comparação
-      },
-    },
-    select: {
-      id: true,
-      name: true,
-      url: true,
-      sector: true,
-    },
-    orderBy: {
-      createdAt: "desc",
-    },
-  });
 
-  return dashboards;
-}
-export type { User };
+/**
+ * Função cacheada (só Prisma, sem cookies)
+ */
+export const getDashboardsBySetor = unstable_cache(
+  async (setor: string): Promise<Dashboard[]> => {
+    return prisma.dashboard.findMany({
+      where: {
+        sector: {
+          equals: setor,
+          mode: "insensitive",
+        },
+      },
+      select: {
+        id: true,
+        name: true,
+        url: true,
+        sector: true,
+      },
+      orderBy: {
+        createdAt: "desc",
+      },
+    });
+  },
+  ["dashboards"], // chave do cache
+  { revalidate: 120 } // 2 minutos
+);
