@@ -97,7 +97,15 @@ export function AppSidebar({ setores, userName }: AppSidebarProps) {
   // Extrai o setor atual da URL
   const setorSlug = pathname.split("/dashboard/")[1]?.split("/")[0];
   const setorAtual = setorSlug ? slugToSetor(setorSlug) : null;
+  useEffect(() => {
+    if (!setorAtual || dashboards.length === 0) return;
 
+    const dashboardSlug = setorToSlug(setorAtual);
+    dashboards.forEach((dashboard) => {
+      const dashboardUrl = `/privado/dashboard/${dashboardSlug}/${dashboard.id}`;
+      router.prefetch(dashboardUrl);
+    });
+  }, [setorAtual, dashboards, router]);
   // Função otimizada para buscar dashboards com cache
   const fetchDashboards = useCallback(
     async (setor: string) => {
@@ -260,6 +268,7 @@ export function AppSidebar({ setores, userName }: AppSidebarProps) {
                     <Link
                       key={dashboard.id}
                       href={dashboardUrl}
+                      prefetch={true} // força prefetch
                       className={`w-full flex items-center px-4 py-2 rounded-lg transition-colors text-left ${
                         isActive
                           ? "bg-blue-100 text-blue-700 font-medium"
