@@ -1,6 +1,6 @@
 "use client";
 import { usePathname, useRouter } from "next/navigation";
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback, useMemo } from "react";
 import { LuBadgeHelp } from "react-icons/lu";
 
 import {
@@ -53,58 +53,127 @@ type Dashboard = {
   sector: string;
 };
 
+// Cache de dashboards para evitar requisições repetidas
+const dashboardsCache = new Map<
+  string,
+  { data: Dashboard[]; timestamp: number }
+>();
+const CACHE_DURATION = 5 * 60 * 1000; // 5 minutos
+
 export function AppSidebar({ setores, userName }: AppSidebarProps) {
   const router = useRouter();
   const pathname = usePathname();
   const [dashboards, setDashboards] = useState<Dashboard[]>([]);
   const [loadingDashboards, setLoadingDashboards] = useState(false);
 
-  const setoresFormatados = setores.map((setor) => ({
-    nome: setor,
-    slug: setorToSlug(setor),
-    url: `/privado/dashboard/${setorToSlug(setor)}`,
-  }));
+  // Memoizar setores formatados para evitar recálculos
+  const setoresFormatados = useMemo(
+    () =>
+      setores.map((setor) => ({
+        nome: setor,
+        slug: setorToSlug(setor),
+        url: `/privado/dashboard/${setorToSlug(setor)}`,
+      })),
+    [setores]
+  );
 
+  // Prefetch de todas as rotas de setores
   useEffect(() => {
     setoresFormatados.forEach((setor) => {
       router.prefetch(setor.url);
     });
   }, [setoresFormatados, router]);
 
-  const setorAtivo = setoresFormatados.find((setor) =>
-    pathname.startsWith(setor.url)
-  ) || {
-    nome: "Selecione um setor",
-    slug: "",
-    url: "/privado/dashboard",
-  };
+  const setorAtivo = useMemo(
+    () =>
+      setoresFormatados.find((setor) => pathname.startsWith(setor.url)) || {
+        nome: "Selecione um setor",
+        slug: "",
+        url: "/privado/dashboard",
+      },
+    [setoresFormatados, pathname]
+  );
 
   // Extrai o setor atual da URL
   const setorSlug = pathname.split("/dashboard/")[1]?.split("/")[0];
   const setorAtual = setorSlug ? slugToSetor(setorSlug) : null;
 
-  // Busca os dashboards quando o setor muda
-  useEffect(() => {
-    async function fetchDashboards() {
-      if (!setorAtual) {
+  // Função otimizada para buscar dashboards com cache
+  const fetchDashboards = useCallback(
+    async (setor: string) => {
+      if (!setor) {
         setDashboards([]);
+        return;
+      }
+
+      // Verificar cache primeiro
+      const cached = dashboardsCache.get(setor);
+      const now = Date.now();
+
+      if (cached && now - cached.timestamp < CACHE_DURATION) {
+        setDashboards(cached.data);
         return;
       }
 
       try {
         setLoadingDashboards(true);
-        const data = await getDashboardsBySetor(setorAtual);
+        const data = await getDashboardsBySetor(setor);
+
+        // Atualizar cache
+        dashboardsCache.set(setor, { data, timestamp: now });
         setDashboards(data);
+
+        // Prefetch das rotas dos dashboards em paralelo
+        if (data.length > 0) {
+          const dashboardSlug = setorToSlug(setor);
+          data.forEach((dashboard) => {
+            const dashboardUrl = `/privado/dashboard/${dashboardSlug}/${dashboard.id}`;
+            router.prefetch(dashboardUrl);
+          });
+        }
       } catch (err) {
         console.error("Erro ao buscar dashboards:", err);
         setDashboards([]);
       } finally {
         setLoadingDashboards(false);
       }
-    }
+    },
+    [router]
+  );
 
-    fetchDashboards();
-  }, [setorAtual]);
+  // Busca os dashboards quando o setor muda
+  useEffect(() => {
+    if (setorAtual) {
+      fetchDashboards(setorAtual);
+    } else {
+      setDashboards([]);
+    }
+  }, [setorAtual, fetchDashboards]);
+
+  // Prefetch proativo ao passar mouse sobre setores
+  const handleSetorHover = useCallback(
+    (setor: string) => {
+      const cached = dashboardsCache.get(setor);
+      const now = Date.now();
+
+      // Se não está em cache ou cache expirou, fazer prefetch
+      if (!cached || now - cached.timestamp >= CACHE_DURATION) {
+        getDashboardsBySetor(setor)
+          .then((data) => {
+            dashboardsCache.set(setor, { data, timestamp: now });
+
+            // Prefetch das rotas dos dashboards
+            const dashboardSlug = setorToSlug(setor);
+            data.forEach((dashboard) => {
+              const dashboardUrl = `/privado/dashboard/${dashboardSlug}/${dashboard.id}`;
+              router.prefetch(dashboardUrl);
+            });
+          })
+          .catch(console.error);
+      }
+    },
+    [router]
+  );
 
   return (
     <Sidebar className="h-full " variant="sidebar">
@@ -141,6 +210,7 @@ export function AppSidebar({ setores, userName }: AppSidebarProps) {
                     <Link
                       key={setor.slug}
                       href={setor.url}
+                      onMouseEnter={() => handleSetorHover(setor.nome)}
                       className={`w-full flex items-center px-4 py-2 rounded-lg transition-colors text-left ${
                         isActive
                           ? "bg-blue-100 text-blue-700 font-medium"
