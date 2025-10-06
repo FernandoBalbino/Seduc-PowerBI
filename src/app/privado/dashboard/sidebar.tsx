@@ -1,6 +1,7 @@
 "use client";
+import useSWR from "swr";
 import { usePathname } from "next/navigation";
-import { useEffect, useState, useMemo } from "react";
+import { useMemo } from "react";
 import Link from "next/link";
 import { LuBadgeHelp } from "react-icons/lu";
 import {
@@ -52,10 +53,12 @@ interface AppSidebarProps {
   userName: string;
 }
 
+const fetcher = async (setor: string) => {
+  return await getDashboardsBySetor(setor);
+};
+
 export function AppSidebar({ setores, userName }: AppSidebarProps) {
   const pathname = usePathname();
-  const [dashboards, setDashboards] = useState<Dashboard[]>([]);
-  const [loadingDashboards, setLoadingDashboards] = useState(false);
 
   const setoresFormatados = useMemo(
     () =>
@@ -77,45 +80,13 @@ export function AppSidebar({ setores, userName }: AppSidebarProps) {
     [setoresFormatados, pathname]
   );
 
-  // Extrai o setor atual da URL
   const setorSlug = pathname.split("/dashboard/")[1]?.split("/")[0];
   const setorAtual = setorSlug ? slugToSetor(setorSlug) : null;
 
-  // Busca os dashboards quando o setor muda
-  useEffect(() => {
-    if (!setorAtual) {
-      setDashboards([]);
-      return;
-    }
-
-    let isMounted = true;
-
-    async function fetchDashboards() {
-      try {
-        setLoadingDashboards(true);
-        const data = await getDashboardsBySetor(setorAtual!);
-
-        if (isMounted) {
-          setDashboards(data);
-        }
-      } catch (err) {
-        console.error("Erro ao buscar dashboards:", err);
-        if (isMounted) {
-          setDashboards([]);
-        }
-      } finally {
-        if (isMounted) {
-          setLoadingDashboards(false);
-        }
-      }
-    }
-
-    fetchDashboards();
-
-    return () => {
-      isMounted = false;
-    };
-  }, [setorAtual]);
+  const { data: dashboards, isLoading } = useSWR(
+    setorAtual ? ["dashboards", setorAtual] : null,
+    () => fetcher(setorAtual!)
+  );
 
   return (
     <Sidebar className="h-full z-50" variant="sidebar">
@@ -182,11 +153,11 @@ export function AppSidebar({ setores, userName }: AppSidebarProps) {
                   Selecione um setor para ver os dashboards
                 </p>
               </div>
-            ) : loadingDashboards ? (
+            ) : isLoading ? (
               <div className="flex items-center justify-center py-4">
                 <Loader2 className="w-5 h-5 animate-spin text-blue-500" />
               </div>
-            ) : dashboards.length === 0 ? (
+            ) : dashboards && dashboards.length === 0 ? (
               <div className="text-sm border-4 flex flex-col justify-center py-10 items-center border-dashed text-center">
                 <LuBadgeHelp color="#919191" size={70} className="mr-2" />
                 <p className="text-[#919191] mx-auto px-3">
@@ -196,7 +167,7 @@ export function AppSidebar({ setores, userName }: AppSidebarProps) {
               </div>
             ) : (
               <div className="space-y-1">
-                {dashboards.map((dashboard) => {
+                {dashboards?.map((dashboard) => {
                   const dashboardUrl = `/privado/dashboard/${setorSlug}/${dashboard.id}`;
                   const isActive = pathname === dashboardUrl;
 
