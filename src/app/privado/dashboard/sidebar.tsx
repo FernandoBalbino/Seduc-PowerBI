@@ -45,10 +45,21 @@ interface AppSidebarProps {
   setores: string[];
   userName: string;
 }
+interface Setor {
+  nome: string;
+  slug: string;
+  url: string;
+}
 
 const fetcher = async (setor: string) => getDashboardsBySetor(setor);
 
-const SetorLink = ({ setor, isActive }: { setor: any; isActive: boolean }) => {
+const SetorLink = ({
+  setor,
+  isActive,
+}: {
+  setor: Setor;
+  isActive: boolean;
+}) => {
   return (
     <Link
       href={setor.url}
