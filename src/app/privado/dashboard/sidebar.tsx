@@ -1,14 +1,13 @@
 "use client";
-import { usePathname, useRouter } from "next/navigation";
-import { useEffect, useState, useCallback, useMemo } from "react";
+import { usePathname } from "next/navigation";
+import { useEffect, useState, useMemo } from "react";
+import Link from "next/link";
 import { LuBadgeHelp } from "react-icons/lu";
-
 import {
   HoverCard,
   HoverCardContent,
   HoverCardTrigger,
 } from "@/components/ui/hover-card";
-import Link from "next/link";
 import {
   Sidebar,
   SidebarContent,
@@ -21,10 +20,10 @@ import {
   CollapsibleContent,
   CollapsibleTrigger,
 } from "@/components/ui/collapsible";
-import { getDashboardsBySetor } from "./action";
 import { ChevronDown, Loader2 } from "lucide-react";
 import { CiLogout } from "react-icons/ci";
 import { logout } from "@/app/login/action";
+import { getDashboardsBySetor } from "@/app/privado/dashboard/action";
 
 function setorToSlug(setor: string): string {
   return setor
@@ -41,11 +40,6 @@ function slugToSetor(slug: string): string {
     .join(" ");
 }
 
-interface AppSidebarProps {
-  setores: string[];
-  userName: string;
-}
-
 type Dashboard = {
   id: string;
   name: string;
@@ -53,20 +47,16 @@ type Dashboard = {
   sector: string;
 };
 
-// Cache de dashboards para evitar requisições repetidas
-const dashboardsCache = new Map<
-  string,
-  { data: Dashboard[]; timestamp: number }
->();
-const CACHE_DURATION = 5 * 60 * 1000; // 5 minutos
+interface AppSidebarProps {
+  setores: string[];
+  userName: string;
+}
 
 export function AppSidebar({ setores, userName }: AppSidebarProps) {
-  const router = useRouter();
   const pathname = usePathname();
   const [dashboards, setDashboards] = useState<Dashboard[]>([]);
   const [loadingDashboards, setLoadingDashboards] = useState(false);
 
-  // Memoizar setores formatados para evitar recálculos
   const setoresFormatados = useMemo(
     () =>
       setores.map((setor) => ({
@@ -76,13 +66,6 @@ export function AppSidebar({ setores, userName }: AppSidebarProps) {
       })),
     [setores]
   );
-
-  // Prefetch de todas as rotas de setores
-  useEffect(() => {
-    setoresFormatados.forEach((setor) => {
-      router.prefetch(setor.url);
-    });
-  }, [setoresFormatados, router]);
 
   const setorAtivo = useMemo(
     () =>
@@ -97,96 +80,48 @@ export function AppSidebar({ setores, userName }: AppSidebarProps) {
   // Extrai o setor atual da URL
   const setorSlug = pathname.split("/dashboard/")[1]?.split("/")[0];
   const setorAtual = setorSlug ? slugToSetor(setorSlug) : null;
-  useEffect(() => {
-    if (!setorAtual || dashboards.length === 0) return;
-
-    const dashboardSlug = setorToSlug(setorAtual);
-    dashboards.forEach((dashboard) => {
-      const dashboardUrl = `/privado/dashboard/${dashboardSlug}/${dashboard.id}`;
-      router.prefetch(dashboardUrl);
-    });
-  }, [setorAtual, dashboards, router]);
-  // Função otimizada para buscar dashboards com cache
-  const fetchDashboards = useCallback(
-    async (setor: string) => {
-      if (!setor) {
-        setDashboards([]);
-        return;
-      }
-
-      // Verificar cache primeiro
-      const cached = dashboardsCache.get(setor);
-      const now = Date.now();
-
-      if (cached && now - cached.timestamp < CACHE_DURATION) {
-        setDashboards(cached.data);
-        return;
-      }
-
-      try {
-        setLoadingDashboards(true);
-        const data = await getDashboardsBySetor(setor);
-
-        // Atualizar cache
-        dashboardsCache.set(setor, { data, timestamp: now });
-        setDashboards(data);
-
-        // Prefetch das rotas dos dashboards em paralelo
-        if (data.length > 0) {
-          const dashboardSlug = setorToSlug(setor);
-          data.forEach((dashboard) => {
-            const dashboardUrl = `/privado/dashboard/${dashboardSlug}/${dashboard.id}`;
-            router.prefetch(dashboardUrl);
-          });
-        }
-      } catch (err) {
-        console.error("Erro ao buscar dashboards:", err);
-        setDashboards([]);
-      } finally {
-        setLoadingDashboards(false);
-      }
-    },
-    [router]
-  );
 
   // Busca os dashboards quando o setor muda
   useEffect(() => {
-    if (setorAtual) {
-      fetchDashboards(setorAtual);
-    } else {
+    if (!setorAtual) {
       setDashboards([]);
+      return;
     }
-  }, [setorAtual, fetchDashboards]);
 
-  // Prefetch proativo ao passar mouse sobre setores
-  const handleSetorHover = useCallback(
-    (setor: string) => {
-      const cached = dashboardsCache.get(setor);
-      const now = Date.now();
+    let isMounted = true;
 
-      // Se não está em cache ou cache expirou, fazer prefetch
-      if (!cached || now - cached.timestamp >= CACHE_DURATION) {
-        getDashboardsBySetor(setor)
-          .then((data) => {
-            dashboardsCache.set(setor, { data, timestamp: now });
+    async function fetchDashboards() {
+      try {
+        setLoadingDashboards(true);
+        const data = await getDashboardsBySetor(setorAtual!);
 
-            // Prefetch das rotas dos dashboards
-            const dashboardSlug = setorToSlug(setor);
-            data.forEach((dashboard) => {
-              const dashboardUrl = `/privado/dashboard/${dashboardSlug}/${dashboard.id}`;
-              router.prefetch(dashboardUrl);
-            });
-          })
-          .catch(console.error);
+        if (isMounted) {
+          setDashboards(data);
+        }
+      } catch (err) {
+        console.error("Erro ao buscar dashboards:", err);
+        if (isMounted) {
+          setDashboards([]);
+        }
+      } finally {
+        if (isMounted) {
+          setLoadingDashboards(false);
+        }
       }
-    },
-    [router]
-  );
+    }
+
+    fetchDashboards();
+
+    return () => {
+      isMounted = false;
+    };
+  }, [setorAtual]);
 
   return (
     <Sidebar className="h-full z-50" variant="sidebar">
-      <SidebarContent className=" ">
-        <SidebarGroup className="">
+      <SidebarContent>
+        <SidebarGroup>
+          {/* Header */}
           <div className="flex pointer-events-none items-center gap-2 py-3 px-3 border-b border-b-gray-200 mb-3">
             <div className="bg-blue-500 p-5 rounded-2xl w-[50px] h-[50px] flex justify-center items-center text-white text-2xl">
               S
@@ -196,8 +131,10 @@ export function AppSidebar({ setores, userName }: AppSidebarProps) {
               <div className="text-blue-500 font-bold">PowerBI</div>
             </div>
           </div>
+
+          {/* Seletor de Setor */}
           <div className="px-3 mb-4 h-full">
-            <SidebarGroupLabel className="text-xs ">
+            <SidebarGroupLabel className="text-xs">
               SETOR ATUAL
             </SidebarGroupLabel>
             <Collapsible defaultOpen className="mb-3">
@@ -218,7 +155,6 @@ export function AppSidebar({ setores, userName }: AppSidebarProps) {
                     <Link
                       key={setor.slug}
                       href={setor.url}
-                      onMouseEnter={() => handleSetorHover(setor.nome)}
                       className={`w-full flex items-center px-4 py-2 rounded-lg transition-colors text-left ${
                         isActive
                           ? "bg-blue-100 text-blue-700 font-medium"
@@ -234,13 +170,13 @@ export function AppSidebar({ setores, userName }: AppSidebarProps) {
           </div>
 
           {/* Seção de Dashboards */}
-          <div className="px-3  w-full">
+          <div className="px-3 w-full">
             <SidebarGroupLabel className="text-xs mb-2">
               DASHBOARDS
             </SidebarGroupLabel>
 
             {!setorAtual ? (
-              <div className="text-sm border-4 flex flex-col justify-center py-10 items-center border-dashed  text-center">
+              <div className="text-sm border-4 flex flex-col justify-center py-10 items-center border-dashed text-center">
                 <LuBadgeHelp color="#919191" size={70} className="mr-2" />
                 <p className="text-[#919191] mx-auto px-3">
                   Selecione um setor para ver os dashboards
@@ -251,7 +187,7 @@ export function AppSidebar({ setores, userName }: AppSidebarProps) {
                 <Loader2 className="w-5 h-5 animate-spin text-blue-500" />
               </div>
             ) : dashboards.length === 0 ? (
-              <div className="text-sm border-4 flex flex-col justify-center py-10 items-center border-dashed  text-center">
+              <div className="text-sm border-4 flex flex-col justify-center py-10 items-center border-dashed text-center">
                 <LuBadgeHelp color="#919191" size={70} className="mr-2" />
                 <p className="text-[#919191] mx-auto px-3">
                   Nenhum dashboard nesse setor. Por favor, adicione um novo e
@@ -268,7 +204,7 @@ export function AppSidebar({ setores, userName }: AppSidebarProps) {
                     <Link
                       key={dashboard.id}
                       href={dashboardUrl}
-                      prefetch={true} // força prefetch
+                      prefetch={true}
                       className={`w-full flex items-center px-4 py-2 rounded-lg transition-colors text-left ${
                         isActive
                           ? "bg-blue-100 text-blue-700 font-medium"
@@ -284,6 +220,7 @@ export function AppSidebar({ setores, userName }: AppSidebarProps) {
           </div>
         </SidebarGroup>
       </SidebarContent>
+
       <SidebarFooter className="bg-white border-t border-t-gray-200">
         <div className="flex justify-between items-center p-4">
           <p className="text-sm font-medium text-gray-900">{userName}</p>
