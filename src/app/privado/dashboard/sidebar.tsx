@@ -41,13 +41,6 @@ function slugToSetor(slug: string): string {
     .join(" ");
 }
 
-type Dashboard = {
-  id: string;
-  name: string;
-  url: string;
-  sector: string;
-};
-
 interface AppSidebarProps {
   setores: string[];
   userName: string;

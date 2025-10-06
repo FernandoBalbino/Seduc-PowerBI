@@ -1,12 +1,5 @@
 import { redirect } from "next/navigation";
-import {
-  Breadcrumb,
-  BreadcrumbItem,
-  BreadcrumbLink,
-  BreadcrumbList,
-  BreadcrumbPage,
-  BreadcrumbSeparator,
-} from "@/components/ui/breadcrumb";
+
 import { createClient } from "@/utils/supabase/serve";
 
 export default async function PrivatePage() {

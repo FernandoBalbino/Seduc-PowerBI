@@ -17,7 +17,6 @@ export default async function DashboardLayout({
         <SidebarTrigger className="text-6xl" />
         {children}
       </main>
-      teste
     </SidebarProvider>
   );
 }
