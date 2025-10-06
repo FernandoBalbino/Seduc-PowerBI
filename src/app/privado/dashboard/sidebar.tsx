@@ -53,8 +53,22 @@ interface AppSidebarProps {
   userName: string;
 }
 
-const fetcher = async (setor: string) => {
-  return await getDashboardsBySetor(setor);
+const fetcher = async (setor: string) => getDashboardsBySetor(setor);
+
+const SetorLink = ({ setor, isActive }: { setor: any; isActive: boolean }) => {
+  return (
+    <Link
+      href={setor.url}
+      prefetch={true} // prefetch automático
+      className={`w-full flex items-center px-4 py-2 rounded-lg transition-colors text-left ${
+        isActive
+          ? "bg-blue-100 text-blue-700 font-medium"
+          : "hover:bg-gray-100 text-gray-700"
+      }`}
+    >
+      <span className="text-sm">{setor.nome}</span>
+    </Link>
+  );
 };
 
 export function AppSidebar({ setores, userName }: AppSidebarProps) {
@@ -83,9 +97,14 @@ export function AppSidebar({ setores, userName }: AppSidebarProps) {
   const setorSlug = pathname.split("/dashboard/")[1]?.split("/")[0];
   const setorAtual = setorSlug ? slugToSetor(setorSlug) : null;
 
+  // SWR otimizado com cache e sem revalidação desnecessária
   const { data: dashboards, isLoading } = useSWR(
     setorAtual ? ["dashboards", setorAtual] : null,
-    () => fetcher(setorAtual!)
+    () => fetcher(setorAtual!),
+    {
+      revalidateOnFocus: false, // evita refetch ao focar
+      dedupingInterval: 60000, // 1 minuto de deduplicação
+    }
   );
 
   return (
@@ -119,23 +138,13 @@ export function AppSidebar({ setores, userName }: AppSidebarProps) {
               </CollapsibleTrigger>
 
               <CollapsibleContent className="mt-2 space-y-1">
-                {setoresFormatados.map((setor) => {
-                  const isActive = pathname.startsWith(setor.url);
-
-                  return (
-                    <Link
-                      key={setor.slug}
-                      href={setor.url}
-                      className={`w-full flex items-center px-4 py-2 rounded-lg transition-colors text-left ${
-                        isActive
-                          ? "bg-blue-100 text-blue-700 font-medium"
-                          : "hover:bg-gray-100 text-gray-700"
-                      }`}
-                    >
-                      <span className="text-sm">{setor.nome}</span>
-                    </Link>
-                  );
-                })}
+                {setoresFormatados.map((setor) => (
+                  <SetorLink
+                    key={setor.slug}
+                    setor={setor}
+                    isActive={pathname.startsWith(setor.url)}
+                  />
+                ))}
               </CollapsibleContent>
             </Collapsible>
           </div>

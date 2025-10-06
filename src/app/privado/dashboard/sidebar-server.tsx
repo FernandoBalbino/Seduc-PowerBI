@@ -5,8 +5,7 @@ import { LuBadgeHelp } from "react-icons/lu";
 interface SidebarDashboardsProps {
   setor: string | null;
 }
-export const revalidate = 120;
-export const dynamic = "force-static"; // forçar a revalidação a cada acesso
+
 export async function SidebarDashboards({ setor }: SidebarDashboardsProps) {
   if (!setor) {
     return (
