@@ -1,7 +1,7 @@
 "use client";
 import { useState } from "react";
 
-export default function modelLooker({ params }: { params: string }) {
+export default function ModelLooker({ params }: { params: string }) {
   const [isLoading, setLoading] = useState(true);
 
   return (
