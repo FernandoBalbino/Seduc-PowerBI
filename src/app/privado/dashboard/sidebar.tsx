@@ -101,7 +101,6 @@ export function AppSidebar({ setores, userName }: AppSidebarProps) {
   const setorSlug = pathname.split("/dashboard/")[1]?.split("/")[0];
   const setorAtual = setorSlug ? slugToSetor(setorSlug) : null;
 
-  // SWR otimizado com cache e sem revalidação desnecessária
   const { data: dashboards, isLoading } = useSWR(
     setorAtual ? ["dashboards", setorAtual] : null,
     () => fetcher(setorAtual!),
@@ -112,8 +111,8 @@ export function AppSidebar({ setores, userName }: AppSidebarProps) {
   );
 
   return (
-    <Sidebar className="h-full z-50" variant="sidebar">
-      <SidebarContent>
+    <Sidebar className="h-full bg-white z-50" variant="sidebar">
+      <SidebarContent className="bg-white">
         <SidebarGroup>
           {/* Header */}
           <div className="flex pointer-events-none items-center gap-2 py-3 px-3 border-b border-b-gray-200 mb-3">

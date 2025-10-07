@@ -83,3 +83,19 @@ export const getDashboardsBySetor = unstable_cache(
   ["dashboards"], // chave do cache
   { revalidate: 120 } // 2 minutos
 );
+
+export const getDashboardsByID = unstable_cache(
+  async (id: string): Promise<Dashboard | null> => {
+    return prisma.dashboard.findUnique({
+      where: { id },
+      select: {
+        id: true,
+        name: true,
+        url: true,
+        sector: true,
+      },
+    });
+  },
+  ["dashboardByID"], // chave do cache
+  { revalidate: 120 } // 2 minutos
+);

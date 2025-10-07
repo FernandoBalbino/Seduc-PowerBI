@@ -1,5 +1,5 @@
 import { redirect } from "next/navigation";
-
+import DashView from "./viewDash";
 import { createClient } from "@/utils/supabase/serve";
 
 export default async function PrivatePage() {
@@ -12,9 +12,7 @@ export default async function PrivatePage() {
 
   return (
     <>
-      <div className="flex rounded-3xl border-8 border-dashed mx-auto items-center justify-center w-[90%] h-[calc(95vh-58px)] ">
-        <span className="text-white text-xl font-bold">d</span>
-      </div>
+      <DashView />
     </>
   );
 }

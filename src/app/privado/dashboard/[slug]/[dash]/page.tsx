@@ -1,16 +1,17 @@
-"use client";
-import { use } from "react";
+import { getDashboardsByID } from "../../action";
+import DashboardViewer from "./dashboardViewer";
 
-export default function BlogPostPage({
+export default async function BlogPostPage({
   params,
 }: {
-  params: Promise<{ slug: string }>;
+  params: Promise<{ slug: string; dash: string }>;
 }) {
-  const { slug } = use(params);
+  const { dash } = await params;
+  const dashboard = await getDashboardsByID(dash);
 
   return (
     <div>
-      <p>{slug}</p>
+      <DashboardViewer params={dashboard} />
     </div>
   );
 }
