@@ -82,7 +82,7 @@ export const getDashboardsBySetor = unstable_cache(
   },
   ["dashboards"], // chave do cache
   {
-    revalidate: 60,
+    revalidate: 30,
     tags: ["dashboards-list"],
   }
 );

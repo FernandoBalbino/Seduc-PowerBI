@@ -1,15 +1,21 @@
 "use client";
 import { LayoutDashboard, Building2, Link } from "lucide-react";
 type Setores = string[];
-import { useActionState } from "react";
-import SubmitButton from "./buttonSubmit";
+import { useActionState, useEffect } from "react";
+import { mutate } from "swr";
 import createDashboard from "./create";
 
 export default function AdicionarDashForm({ setores }: { setores: Setores }) {
   const itens = setores;
 
   const [state, formAction, isPending] = useActionState(createDashboard, null);
+  useEffect(() => {
+    if (state?.success && state?.dashboard?.sector) {
+      mutate(["dashboards", state.dashboard.sector]);
 
+      mutate((key) => Array.isArray(key) && key[0] === "dashboards");
+    }
+  }, [state?.success, state?.dashboard?.sector]);
   return (
     <div className="bg-gradient-to-br mt-8 from-gray-50 to-gray-100 w-full min-h-screen p-6">
       <div className="max-w-3xl mx-auto">
