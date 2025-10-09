@@ -81,7 +81,10 @@ export const getDashboardsBySetor = unstable_cache(
     });
   },
   ["dashboards"], // chave do cache
-  { revalidate: 120 } // 2 minutos
+  {
+    revalidate: 60,
+    tags: ["dashboards-list"],
+  }
 );
 
 export const getDashboardsByID = unstable_cache(

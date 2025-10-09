@@ -28,7 +28,7 @@ export default function ModelLooker({ params }: { params: string }) {
             />
           </svg>
           <span className="text-lg font-medium text-black">
-            Carregando dados...
+            Carregando dashboard...
           </span>
         </div>
       )}

@@ -105,8 +105,9 @@ export function AppSidebar({ setores, userName }: AppSidebarProps) {
     setorAtual ? ["dashboards", setorAtual] : null,
     () => fetcher(setorAtual!),
     {
-      revalidateOnFocus: false, // evita refetch ao focar
-      dedupingInterval: 60000, // 1 minuto de deduplicação
+      revalidateOnFocus: true,
+      dedupingInterval: 2000,
+      revalidateOnMount: true,
     }
   );
 
@@ -169,12 +170,23 @@ export function AppSidebar({ setores, userName }: AppSidebarProps) {
               <div className="flex items-center justify-center py-4">
                 <Loader2 className="w-5 h-5 animate-spin text-blue-500" />
               </div>
-            ) : dashboards && dashboards.length === 0 ? (
+            ) : dashboards &&
+              dashboards.length === 0 &&
+              !pathname.includes("adicionar") ? (
               <div className="text-sm border-4 flex flex-col justify-center py-10 items-center border-dashed text-center">
                 <LuBadgeHelp color="#919191" size={70} className="mr-2" />
                 <p className="text-[#919191] mx-auto px-3">
                   Nenhum dashboard nesse setor. Por favor, adicione um novo e
                   atribua ao setor {setorAtual}.
+                </p>
+              </div>
+            ) : dashboards && pathname.includes("adicionar") ? (
+              <div className="text-sm border-4 flex flex-col justify-center py-10 items-center border-dashed text-center">
+                <LuBadgeHelp color="#919191" size={70} className="mr-2" />
+                <p className="text-[#919191] mx-auto px-3">
+                  Essa página serve pra você adicionar dashboards no banco de
+                  dados vinculado ao seu setor, portanto preencha os campos com
+                  atenção!
                 </p>
               </div>
             ) : (
