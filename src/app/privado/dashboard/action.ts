@@ -1,7 +1,7 @@
 "use server";
 import { createClient } from "@/utils/supabase/serve";
 import { prisma } from "@/lib/prisma";
-import { unstable_cache } from "next/cache";
+import { unstable_cache, revalidatePath, revalidateTag } from "next/cache";
 
 type User = {
   id: string;
@@ -17,9 +17,6 @@ type Dashboard = {
   sector: string;
 };
 
-/**
- * Função dinâmica (não pode ser cacheada porque usa cookies do Supabase)
- */
 export async function getUsuario(): Promise<User> {
   const supabase = await createClient();
   const { data } = await supabase.auth.getUser();
@@ -102,3 +99,58 @@ export const getDashboardsByID = unstable_cache(
   ["dashboardByID"], // chave do cache
   { revalidate: 120 } // 2 minutos
 );
+
+export async function deleteDashboard(
+  id: string
+): Promise<{ success: boolean; message: string }> {
+  try {
+    const dashboard = await prisma.dashboard.findUnique({
+      where: { id },
+    });
+
+    if (!dashboard) {
+      return { success: false, message: "Dashboard não encontrado" };
+    }
+    await prisma.dashboard.delete({
+      where: { id },
+    });
+
+    revalidateTag("dashboards-list");
+
+    return { success: true, message: "Dashboard deletado com sucesso!" };
+  } catch (error) {
+    console.error("ERROR AO DELETAR:", error);
+    return { success: false, message: "Erro interno ao deletar" };
+  }
+}
+
+export async function renomearDashboard(
+  id: string,
+  rename: string
+): Promise<{ success: boolean; message: string }> {
+  try {
+    if (!rename || rename.trim().length === 0) {
+      return { success: false, message: "Nome não pode estar vazio" };
+    }
+
+    const dashboard = await prisma.dashboard.update({
+      where: { id },
+      data: {
+        name: rename.trim(),
+      },
+    });
+
+    revalidateTag("dashboards-list");
+
+    return {
+      success: true,
+      message: "Dashboard renomeado com sucesso!",
+    };
+  } catch (error) {
+    console.error("ERRO AO RENOMEAR:", error);
+    return {
+      success: false,
+      message: "Erro ao renomear dashboard",
+    };
+  }
+}

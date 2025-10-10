@@ -1,9 +1,10 @@
 "use client";
 import useSWR from "swr";
 import { usePathname } from "next/navigation";
-import { useMemo } from "react";
+import { useMemo, useState, useEffect } from "react";
 import Link from "next/link";
 import { LuBadgeHelp } from "react-icons/lu";
+import DeleteItem from "./deleteItem";
 import {
   HoverCard,
   HoverCardContent,
@@ -16,6 +17,7 @@ import {
   SidebarGroup,
   SidebarGroupLabel,
 } from "@/components/ui/sidebar";
+
 import {
   Collapsible,
   CollapsibleContent,
@@ -110,7 +112,15 @@ export function AppSidebar({ setores, userName }: AppSidebarProps) {
       revalidateOnMount: true,
     }
   );
+  const [localDashboards, setLocalDashboards] =
+    useState<typeof dashboards>(dashboards);
 
+  // Use useEffect para sincronizar
+  useEffect(() => {
+    if (dashboards) {
+      setLocalDashboards(dashboards);
+    }
+  }, [dashboards]);
   return (
     <Sidebar className="h-full bg-white z-50" variant="sidebar">
       <SidebarContent className="bg-white">
@@ -196,18 +206,35 @@ export function AppSidebar({ setores, userName }: AppSidebarProps) {
                   const isActive = pathname === dashboardUrl;
 
                   return (
-                    <Link
+                    <div
                       key={dashboard.id}
-                      href={dashboardUrl}
-                      prefetch={true}
-                      className={`w-full flex items-center px-4 py-2 rounded-lg transition-colors text-left ${
-                        isActive
-                          ? "bg-blue-100 text-blue-700 font-medium"
-                          : "hover:bg-gray-100 text-gray-700"
-                      }`}
+                      className=" w-full gap-x-2 flex justify-between items-center relative"
                     >
-                      <span className="text-sm truncate">{dashboard.name}</span>
-                    </Link>
+                      <Link
+                        href={dashboardUrl}
+                        prefetch={true}
+                        className={` w-[85%] flex items-center px-4 py-2 rounded-lg  transition-colors text-left ${
+                          isActive
+                            ? "bg-blue-100 text-blue-700 font-medium"
+                            : "hover:bg-gray-100 text-gray-700"
+                        }`}
+                      >
+                        <span className="text-sm truncate">
+                          {dashboard.name}
+                        </span>
+                      </Link>
+                      <div className="bg-gray-200 p-1 rounded-lg ">
+                        <DeleteItem
+                          dashboardId={dashboard.id}
+                          setorAtual={setorAtual}
+                          onDelete={() => {
+                            setLocalDashboards((prev) =>
+                              prev?.filter((d) => d.id !== dashboard.id)
+                            );
+                          }}
+                        />
+                      </div>
+                    </div>
                   );
                 })}
               </div>
